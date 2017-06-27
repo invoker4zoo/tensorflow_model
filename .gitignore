@@ -113,3 +113,4 @@ ENV/
 # tmp data path
 /tmp/MNIST_data
 /tmp/cifar10_data
+
