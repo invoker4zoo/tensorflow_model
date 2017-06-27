@@ -9,7 +9,7 @@ import tensorflow as tf
   data_sets.validation
   data_sets.test
 '''
-mnist = input_data.read_data_sets("MNIST_data/", one_hot=True)
+mnist = input_data.read_data_sets("/tmp/MNIST_data/", one_hot=True)
 
 """
 构建有一层隐含层，10个节点的简单神经网络
