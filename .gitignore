@@ -111,4 +111,5 @@ ENV/
 .idea
 
 # tmp data path
-tmp/
+/tmp/MNIST_data
+/tmp/cifar10_data
