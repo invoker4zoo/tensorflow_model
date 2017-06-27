@@ -111,4 +111,4 @@ ENV/
 .idea
 
 # tmp data path
-tmp/*
+tmp/
