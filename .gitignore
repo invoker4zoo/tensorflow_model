@@ -99,3 +99,16 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# MNIST data
+# mnist_samples/MNIST_data/*
+
+# cifar data
+# cifar10_sample/data_set/*
+# cifar10_cc/data_set/*
+
+# idea
+.idea
+
+# tmp data path
+tmp/
