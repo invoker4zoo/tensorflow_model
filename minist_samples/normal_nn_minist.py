@@ -1,6 +1,8 @@
 #coding=utf-8
 import input_data
 import tensorflow as tf
+import os
+
 
 '''
   mnist 数据集,one_hot = True 标签做独热编码
