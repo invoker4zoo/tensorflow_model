@@ -1,3 +1,4 @@
+# coding=utf-8
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
@@ -7,7 +8,7 @@ import shutil
 
 
 
-
+FILE_PATH = '/home/showlove/code/tensorflow_model/tmp/MNIST_data'
 img_height = 28
 img_width = 28
 img_size = img_height * img_width
@@ -85,7 +86,7 @@ def show_result(batch_res, fname, grid_size=(8, 8), grid_pad=5):
 
 def train():
     # load data（mnist手写数据集）
-    mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+    mnist = input_data.read_data_sets(FILE_PATH, one_hot=True)
 
     x_data = tf.placeholder(tf.float32, [batch_size, img_size], name="x_data")
     z_prior = tf.placeholder(tf.float32, [batch_size, z_size], name="z_prior")
