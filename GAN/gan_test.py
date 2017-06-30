@@ -1,3 +1,4 @@
+# coding=utf-8
 import tensorflow as tf
 from tensorflow.examples.tutorials.mnist import input_data
 import numpy as np
@@ -63,7 +64,7 @@ def build_discriminator(x_data, x_generated, keep_prob):
     return y_data, y_generated, d_params
 
 
-#
+# saving generate image fun
 def show_result(batch_res, fname, grid_size=(8, 8), grid_pad=5):
     batch_res = 0.5 * batch_res.reshape((batch_res.shape[0], img_height, img_width)) + 0.5
     img_h, img_w = batch_res.shape[1], batch_res.shape[2]
