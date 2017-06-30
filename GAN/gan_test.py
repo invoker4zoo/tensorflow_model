@@ -5,10 +5,11 @@ import numpy as np
 from skimage.io import imsave
 import os
 import shutil
+import datetime
 
 
 
-
+FILE_PATH = '/home/showlove/code/tensorflow_model/tmp/MNIST_data'
 img_height = 28
 img_width = 28
 img_size = img_height * img_width
@@ -86,7 +87,7 @@ def show_result(batch_res, fname, grid_size=(8, 8), grid_pad=5):
 
 def train():
     # load data（mnist手写数据集）
-    mnist = input_data.read_data_sets('MNIST_data', one_hot=True)
+    mnist = input_data.read_data_sets(FILE_PATH, one_hot=True)
 
     x_data = tf.placeholder(tf.float32, [batch_size, img_size], name="x_data")
     z_prior = tf.placeholder(tf.float32, [batch_size, z_size], name="z_prior")
@@ -153,13 +154,17 @@ def train():
             if j % 1 == 0:
                 sess.run(g_trainer,
                          feed_dict={x_data: x_value, z_prior: z_value, keep_prob: np.sum(0.7).astype(np.float32)})
+
         x_gen_val = sess.run(x_generated, feed_dict={z_prior: z_sample_val})
-        show_result(x_gen_val, "output/sample{0}.jpg".format(i))
+        if i%50==0:
+            show_result(x_gen_val, "output/sample{0}.jpg".format(i))
         z_random_sample_val = np.random.normal(0, 1, size=(batch_size, z_size)).astype(np.float32)
         x_gen_val = sess.run(x_generated, feed_dict={z_prior: z_random_sample_val})
-        show_result(x_gen_val, "output/random_sample{0}.jpg".format(i))
+        if i % 50 == 0:
+            show_result(x_gen_val, "output/random_sample{0}.jpg".format(i))
         sess.run(tf.assign(global_step, i + 1))
-        saver.save(sess, os.path.join(output_path, "model"), global_step=global_step)
+        if i % 50 == 0:
+            saver.save(sess, os.path.join(output_path, "model"), global_step=global_step)
 
 
 
@@ -183,7 +188,10 @@ def test():
 
 
 if __name__ == '__main__':
+    begin_time = datetime.datetime.now()
     if to_train:
         train()
     else:
         test()
+    end_time = datetime.datetime.now()
+    print 'program lasting:' + str((end_time-begin_time).second)
