@@ -111,8 +111,8 @@ ENV/
 .idea
 
 # tmp data path
-/tmp/MNIST_data
-/tmp/cifar10_data
+/tmp/MNIST_data/*
+/tmp/cifar10_data/*
 
 # gan test file path
 /GAN/output/*
