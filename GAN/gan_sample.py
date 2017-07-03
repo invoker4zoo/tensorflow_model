@@ -7,9 +7,9 @@ import os
 
 flags = tf.app.flags
 #
-flags.DEFINE_integer('img height', 28, "input image height")
-flags.DEFINE_integer('img weight', 28, "input image weight")
-flags.DEFINE_integer('batch size', 256, "num of img size for each batch")
+flags.DEFINE_integer('img_height', 28, "input image height")
+flags.DEFINE_integer('img_weight', 28, "input image weight")
+flags.DEFINE_integer('batch_size', 256, "num of img size for each batch")
 flags.DEFINE_integer('epoch', 100, "epoch for training")
 
 flags.DEFINE_float('learning_rate', 0.0002, "Learning rate for adam")

@@ -9,7 +9,7 @@ import tensorflow as tf
 import numpy as np
 
 
-class DCGAN(object):
+class DCGan(object):
     def __init__(self):
         pass
 
@@ -38,15 +38,36 @@ class DCGAN(object):
         pass
 
 
-class SampleGAN(object):
-    def __init__(self):
-        pass
+class SampleNNGan(object):
+    def __init__(self, config):
+        self.config = config
+
+        self.hidden_layer_1 = 150
+        self.hidden_layer_2 = 300
+        self.z_size = 100
+
+        # using config setting later
+        self.img_height = 28
+        self.img_width = 28
+        self.img_size = self.img_height * self.img_width
 
     def train(self):
         pass
 
-    def generator(self):
-        pass
+    def generator(self, z_input):
+
+        w1 = tf.Variable(tf.truncated_normal([self.z_size, self.hidden_layer_1], stddev=0.1), name="g_w1", dtype=tf.float32)
+        b1 = tf.Variable(tf.zeros([self.hidden_layer_1]), name="g_b1", dtype=tf.float32)
+        h1 = tf.nn.relu(tf.matmul(z_input, w1) + b1)
+        w2 = tf.Variable(tf.truncated_normal([self.hidden_layer_1, self.hidden_layer_2], stddev=0.1), name="g_w2", dtype=tf.float32)
+        b2 = tf.Variable(tf.zeros([self.hidden_layer_2]), name="g_b2", dtype=tf.float32)
+        h2 = tf.nn.relu(tf.matmul(h1, w2) + b2)
+        w3 = tf.Variable(tf.truncated_normal([self.hidden_layer_2, self.img_size], stddev=0.1), name="g_w3", dtype=tf.float32)
+        b3 = tf.Variable(tf.zeros([self.img_size]), name="g_b3", dtype=tf.float32)
+        h3 = tf.matmul(h2, w3) + b3
+        x_generate = tf.nn.tanh(h3)
+        g_params = [w1, b1, w2, b2, w3, b3]
+        return x_generate, g_params
 
     def discriminator(self):
         pass
