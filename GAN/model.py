@@ -75,7 +75,9 @@ class SampleNNGan(object):
         w1 = tf.Variable(tf.truncated_normal([self.img_size,self.hidden_layer_2],stddev=0.1), name="d_w1", dtype=tf.float32)
         b1 = tf.Variable(tf.zeros([self.hidden_layer_2]), name="d_b1", dtype=tf.float32)
         h1 = tf.nn.dropout(tf.nn.relu(tf.matmul(x_input, w1)+b1), keep_prob)
-        w2 = tf.Variable(tf.truncated_normal([self.hidden_layer_2,self.hidden_layer_1],stddev=0.1), name="d_w2", dtype=tf.float32)
+        w2 = tf.Variable(tf.truncated_normal([self.hidden_layer_2, self.hidden_layer_1],stddev=0.1), name="d_w2", dtype=tf.float32)
+        b2 = tf.Variable(tf.zeros([self.hidden_layer_1], stddev=0.1), name="d_b2", dtype=tf.float32)
+        h2 = tf.nn.relu(tf.matmul(h1, w2) + b2)
 
     def build_graph(self):
         pass
