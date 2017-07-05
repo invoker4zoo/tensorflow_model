@@ -165,8 +165,8 @@ def train_neural_network(input_image):
             #       sys.exit()
             reward, image = game.step(list(argmax_t))
 
-            # image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
-            # ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
+            image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
+            ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
             image = np.reshape(image, (80, 100, 1))
             input_image_data1 = np.append(image, input_image_data[:, :, 0:3], axis = 2)
 
