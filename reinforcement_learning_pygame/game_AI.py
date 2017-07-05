@@ -90,7 +90,7 @@ REPLAY_MEMORY = 500000
 BATCH = 100
 
 output = 3  # 输出层神经元数。代表3种操作-MOVE_STAY:[1, 0, 0]  MOVE_LEFT:[0, 1, 0]  MOVE_RIGHT:[0, 0, 1]
-input_image = tf.placeholder("float", [None, 80, 100, 4])  # 游戏像素
+input_image = tf.placeholder("float", [None, 80, 100, 4])  # 游戏像素 每次输入前4次的轨迹图像
 action = tf.placeholder("float", [None, output])     # 操作
 
 # 定义CNN-卷积神经网络 参考:http://blog.topspeedsnail.com/archives/10451
@@ -145,6 +145,28 @@ def train_neural_network(input_image):
 
         n = 0
         epsilon = INITIAL_EPSILON
+        """
+        DEEP Q Learning algorithm
+
+
+        Initialize replay memory D to size N
+        Initialize action-value function Q with random weights
+        for episode = 1, M do
+            Initialize state s_1
+            for t = 1, T do
+                With probability ϵ select random action a_t
+                otherwise select a_t=max_a  Q(s_t,a; θ_i)
+                Execute action a_t in emulator and observe r_t and s_(t+1)
+                Store transition (s_t,a_t,r_t,s_(t+1)) in D
+                Sample a minibatch of transitions (s_j,a_j,r_j,s_(j+1)) from D
+                Set y_j:=
+                    r_j for terminal s_(j+1)
+                    r_j+γ*max_(a^' )  Q(s_(j+1),a'; θ_i) for non-terminal s_(j+1)
+                Perform a gradient step on (y_j-Q(s_j,a_j; θ_i))^2 with respect to θ
+            end for
+        end for
+
+        """
         while True:
             action_t = predict_action.eval(feed_dict = {input_image : [input_image_data]})[0]
 
@@ -194,8 +216,8 @@ def train_neural_network(input_image):
             input_image_data = input_image_data1
             n = n+1
 
-            if n % 10000 == 0:
-                saver.save(sess, 'game.cpk', global_step = n)  # 保存模型
+            if n % 50000 == 0:
+                saver.save(sess, 'model/game.cpk', global_step = n)  # 保存模型
 
             print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
 
