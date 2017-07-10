@@ -79,7 +79,7 @@ class Game(object):
 # learning_rate
 LEARNING_RATE = 0.99
 # 更新梯度
-INITIAL_EPSILON = 1.0
+INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.05
 # 测试观测次数
 EXPLORE = 500000
@@ -118,7 +118,7 @@ def convolutional_neural_network(input_image):
 
 # 深度强化学习入门: https://www.nervanasys.com/demystifying-deep-reinforcement-learning/
 # 训练神经网络
-def train_neural_network(input_image):
+def train_neural_network(input_image, type='train'):
     predict_action = convolutional_neural_network(input_image)
 
     argmax = tf.placeholder("float", [None, output])
@@ -142,8 +142,15 @@ def train_neural_network(input_image):
         sess.run(tf.initialize_all_variables())
 
         saver = tf.train.Saver()
-
-        n = 0
+        checkpoint = tf.train.get_checkpoint_state("model")
+        if checkpoint and checkpoint.model_checkpoint_path:
+            saver.restore(sess, checkpoint.model_checkpoint_path)
+            print("Successfully loaded:", checkpoint.model_checkpoint_path)
+            n = int(checkpoint.model_checkpoint_path.split('-')[1])
+        else:
+            print("Could not find old network weights")
+            n = 0
+        _OBSERVE = OBSERVE + n
         epsilon = INITIAL_EPSILON
         """
         DEEP Q Learning algorithm
@@ -168,58 +175,65 @@ def train_neural_network(input_image):
 
         """
         while True:
-            action_t = predict_action.eval(feed_dict = {input_image : [input_image_data]})[0]
+            if type=='train':
+                action_t = predict_action.eval(feed_dict = {input_image : [input_image_data]})[0]
 
-            argmax_t = np.zeros([output], dtype=np.int)
-            # fixed initil if(random.random() <= INITIAL_EPSILON):
-            # cc 2017-6-12
-            if(random.random() <= epsilon):
-                maxIndex = random.randrange(output)
+                argmax_t = np.zeros([output], dtype=np.int)
+                # fixed initil if(random.random() <= INITIAL_EPSILON):
+                # cc 2017-6-12
+                if(random.random() <= epsilon):
+                    print '___RANDOM ACTION___'
+                    maxIndex = random.randrange(output)
+                else:
+                    maxIndex = np.argmax(action_t)
+                argmax_t[maxIndex] = 1
+                if epsilon > FINAL_EPSILON:
+                    epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
+
+                #for event in pygame.event.get():  macOS需要事件循环，否则白屏
+                #   if event.type == QUIT:
+                #       pygame.quit()
+                #       sys.exit()
+                reward, image = game.step(list(argmax_t))
+
+                image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
+                ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
+                image = np.reshape(image, (80, 100, 1))
+                input_image_data1 = np.append(image, input_image_data[:, :, 0:3], axis = 2)
+
+                D.append((input_image_data, argmax_t, reward, input_image_data1))
+
+                if len(D) > REPLAY_MEMORY:
+                    D.popleft()
+
+                if n > _OBSERVE:
+                    minibatch = random.sample(D, BATCH)
+                    input_image_data_batch = [d[0] for d in minibatch]
+                    argmax_batch = [d[1] for d in minibatch]
+                    reward_batch = [d[2] for d in minibatch]
+                    input_image_data1_batch = [d[3] for d in minibatch]
+
+                    gt_batch = []
+
+                    out_batch = predict_action.eval(feed_dict = {input_image : input_image_data1_batch})
+
+                    for i in range(0, len(minibatch)):
+                        gt_batch.append(reward_batch[i] + LEARNING_RATE * np.max(out_batch[i]))
+
+                    optimizer.run(feed_dict = {gt : gt_batch, argmax : argmax_batch, input_image : input_image_data_batch})
+
+                input_image_data = input_image_data1
+                n = n+1
+
+                if n % 50000 == 0:
+                    saver.save(sess, 'model/game.cpk', global_step = n)  # 保存模型
+
+                print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
             else:
+                action_t = predict_action.eval(feed_dict={input_image: [input_image_data]})[0]
+                argmax_t = np.zeros([output], dtype=np.int)
                 maxIndex = np.argmax(action_t)
-            argmax_t[maxIndex] = 1
-            if epsilon > FINAL_EPSILON:
-                epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
+                argmax_t[maxIndex] = 1
+                _, __ = game.step(list(argmax_t))
 
-            #for event in pygame.event.get():  macOS需要事件循环，否则白屏
-            #   if event.type == QUIT:
-            #       pygame.quit()
-            #       sys.exit()
-            reward, image = game.step(list(argmax_t))
-
-            image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
-            ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
-            image = np.reshape(image, (80, 100, 1))
-            input_image_data1 = np.append(image, input_image_data[:, :, 0:3], axis = 2)
-
-            D.append((input_image_data, argmax_t, reward, input_image_data1))
-
-            if len(D) > REPLAY_MEMORY:
-                D.popleft()
-
-            if n > OBSERVE:
-                minibatch = random.sample(D, BATCH)
-                input_image_data_batch = [d[0] for d in minibatch]
-                argmax_batch = [d[1] for d in minibatch]
-                reward_batch = [d[2] for d in minibatch]
-                input_image_data1_batch = [d[3] for d in minibatch]
-
-                gt_batch = []
-
-                out_batch = predict_action.eval(feed_dict = {input_image : input_image_data1_batch})
-
-                for i in range(0, len(minibatch)):
-                    gt_batch.append(reward_batch[i] + LEARNING_RATE * np.max(out_batch[i]))
-
-                optimizer.run(feed_dict = {gt : gt_batch, argmax : argmax_batch, input_image : input_image_data_batch})
-
-            input_image_data = input_image_data1
-            n = n+1
-
-            if n % 50000 == 0:
-                saver.save(sess, 'model/game.cpk', global_step = n)  # 保存模型
-
-            print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
-
-
-train_neural_network(input_image)
+train_neural_network(input_image, 'test')
