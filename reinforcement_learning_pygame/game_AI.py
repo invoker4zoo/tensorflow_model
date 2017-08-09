@@ -79,7 +79,7 @@ class Game(object):
 # learning_rate
 LEARNING_RATE = 0.99
 # 更新梯度
-INITIAL_EPSILON = 1.0
+INITIAL_EPSILON = 0.1
 FINAL_EPSILON = 0.05
 # 测试观测次数
 EXPLORE = 500000
@@ -90,7 +90,7 @@ REPLAY_MEMORY = 500000
 BATCH = 100
 
 output = 3  # 输出层神经元数。代表3种操作-MOVE_STAY:[1, 0, 0]  MOVE_LEFT:[0, 1, 0]  MOVE_RIGHT:[0, 0, 1]
-input_image = tf.placeholder("float", [None, 80, 100, 4])  # 游戏像素
+input_image = tf.placeholder("float", [None, 80, 100, 4])  # 游戏像素 每次输入前4次的轨迹图像
 action = tf.placeholder("float", [None, output])     # 操作
 
 # 定义CNN-卷积神经网络 参考:http://blog.topspeedsnail.com/archives/10451
@@ -118,7 +118,7 @@ def convolutional_neural_network(input_image):
 
 # 深度强化学习入门: https://www.nervanasys.com/demystifying-deep-reinforcement-learning/
 # 训练神经网络
-def train_neural_network(input_image):
+def train_neural_network(input_image, type='train'):
     predict_action = convolutional_neural_network(input_image)
 
     argmax = tf.placeholder("float", [None, output])
@@ -142,62 +142,98 @@ def train_neural_network(input_image):
         sess.run(tf.initialize_all_variables())
 
         saver = tf.train.Saver()
-
-        n = 0
+        checkpoint = tf.train.get_checkpoint_state("model")
+        if checkpoint and checkpoint.model_checkpoint_path:
+            saver.restore(sess, checkpoint.model_checkpoint_path)
+            print("Successfully loaded:", checkpoint.model_checkpoint_path)
+            n = int(checkpoint.model_checkpoint_path.split('-')[1])
+        else:
+            print("Could not find old network weights")
+            n = 0
+        _OBSERVE = OBSERVE + n
         epsilon = INITIAL_EPSILON
+        """
+        DEEP Q Learning algorithm
+
+
+        Initialize replay memory D to size N
+        Initialize action-value function Q with random weights
+        for episode = 1, M do
+            Initialize state s_1
+            for t = 1, T do
+                With probability ϵ select random action a_t
+                otherwise select a_t=max_a  Q(s_t,a; θ_i)
+                Execute action a_t in emulator and observe r_t and s_(t+1)
+                Store transition (s_t,a_t,r_t,s_(t+1)) in D
+                Sample a minibatch of transitions (s_j,a_j,r_j,s_(j+1)) from D
+                Set y_j:=
+                    r_j for terminal s_(j+1)
+                    r_j+γ*max_(a^' )  Q(s_(j+1),a'; θ_i) for non-terminal s_(j+1)
+                Perform a gradient step on (y_j-Q(s_j,a_j; θ_i))^2 with respect to θ
+            end for
+        end for
+
+        """
         while True:
-            action_t = predict_action.eval(feed_dict = {input_image : [input_image_data]})[0]
+            if type=='train':
+                action_t = predict_action.eval(feed_dict = {input_image : [input_image_data]})[0]
 
-            argmax_t = np.zeros([output], dtype=np.int)
-            # fixed initil if(random.random() <= INITIAL_EPSILON):
-            # cc 2017-6-12
-            if(random.random() <= epsilon):
-                maxIndex = random.randrange(output)
+                argmax_t = np.zeros([output], dtype=np.int)
+                # fixed initil if(random.random() <= INITIAL_EPSILON):
+                # cc 2017-6-12
+                if(random.random() <= epsilon):
+                    print '___RANDOM ACTION___'
+                    maxIndex = random.randrange(output)
+                else:
+                    maxIndex = np.argmax(action_t)
+                argmax_t[maxIndex] = 1
+                if epsilon > FINAL_EPSILON:
+                    epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
+
+                #for event in pygame.event.get():  macOS需要事件循环，否则白屏
+                #   if event.type == QUIT:
+                #       pygame.quit()
+                #       sys.exit()
+                reward, image = game.step(list(argmax_t))
+
+                image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
+                ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
+                image = np.reshape(image, (80, 100, 1))
+                input_image_data1 = np.append(image, input_image_data[:, :, 0:3], axis = 2)
+
+                D.append((input_image_data, argmax_t, reward, input_image_data1))
+
+                if len(D) > REPLAY_MEMORY:
+                    D.popleft()
+
+                if n > _OBSERVE:
+                    minibatch = random.sample(D, BATCH)
+                    input_image_data_batch = [d[0] for d in minibatch]
+                    argmax_batch = [d[1] for d in minibatch]
+                    reward_batch = [d[2] for d in minibatch]
+                    input_image_data1_batch = [d[3] for d in minibatch]
+
+                    gt_batch = []
+
+                    out_batch = predict_action.eval(feed_dict = {input_image : input_image_data1_batch})
+
+                    for i in range(0, len(minibatch)):
+                        gt_batch.append(reward_batch[i] + LEARNING_RATE * np.max(out_batch[i]))
+
+                    optimizer.run(feed_dict = {gt : gt_batch, argmax : argmax_batch, input_image : input_image_data_batch})
+
+                input_image_data = input_image_data1
+                n = n+1
+
+                if n % 50000 == 0:
+                    saver.save(sess, 'model/game.cpk', global_step = n)  # 保存模型
+
+                print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
             else:
+                action_t = predict_action.eval(feed_dict={input_image: [input_image_data]})[0]
+                argmax_t = np.zeros([output], dtype=np.int)
                 maxIndex = np.argmax(action_t)
-            argmax_t[maxIndex] = 1
-            if epsilon > FINAL_EPSILON:
-                epsilon -= (INITIAL_EPSILON - FINAL_EPSILON) / EXPLORE
+                argmax_t[maxIndex] = 1
+                _, __ = game.step(list(argmax_t))
 
-            #for event in pygame.event.get():  macOS需要事件循环，否则白屏
-            #   if event.type == QUIT:
-            #       pygame.quit()
-            #       sys.exit()
-            reward, image = game.step(list(argmax_t))
-
-            image = cv2.cvtColor(cv2.resize(image, (100, 80)), cv2.COLOR_BGR2GRAY)
-            ret, image = cv2.threshold(image, 1, 255, cv2.THRESH_BINARY)
-            image = np.reshape(image, (80, 100, 1))
-            input_image_data1 = np.append(image, input_image_data[:, :, 0:3], axis = 2)
-
-            D.append((input_image_data, argmax_t, reward, input_image_data1))
-
-            if len(D) > REPLAY_MEMORY:
-                D.popleft()
-
-            if n > OBSERVE:
-                minibatch = random.sample(D, BATCH)
-                input_image_data_batch = [d[0] for d in minibatch]
-                argmax_batch = [d[1] for d in minibatch]
-                reward_batch = [d[2] for d in minibatch]
-                input_image_data1_batch = [d[3] for d in minibatch]
-
-                gt_batch = []
-
-                out_batch = predict_action.eval(feed_dict = {input_image : input_image_data1_batch})
-
-                for i in range(0, len(minibatch)):
-                    gt_batch.append(reward_batch[i] + LEARNING_RATE * np.max(out_batch[i]))
-
-                optimizer.run(feed_dict = {gt : gt_batch, argmax : argmax_batch, input_image : input_image_data_batch})
-
-            input_image_data = input_image_data1
-            n = n+1
-
-            if n % 10000 == 0:
-                saver.save(sess, 'game.cpk', global_step = n)  # 保存模型
-
-            print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
-
-
-train_neural_network(input_image)
+train_neural_network(input_image, 'test')

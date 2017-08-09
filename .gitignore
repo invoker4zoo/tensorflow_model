@@ -117,3 +117,6 @@ ENV/
 
 # gan test file path
 /GAN/output/*
+
+# game ai model
+/reinforcement_learning_pygame/model/*
