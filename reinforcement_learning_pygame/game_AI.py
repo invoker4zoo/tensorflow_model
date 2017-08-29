@@ -79,15 +79,15 @@ class Game(object):
 # learning_rate
 LEARNING_RATE = 0.99
 # 更新梯度
-INITIAL_EPSILON = 0.1
-FINAL_EPSILON = 0.05
+INITIAL_EPSILON = 0.8
+FINAL_EPSILON = 0.001
 # 测试观测次数
-EXPLORE = 500000
-OBSERVE = 50000
+EXPLORE = 300000
+OBSERVE = 10000
 # 存储过往经验大小
-REPLAY_MEMORY = 500000
+REPLAY_MEMORY = 50000
 
-BATCH = 100
+BATCH = 60
 
 output = 3  # 输出层神经元数。代表3种操作-MOVE_STAY:[1, 0, 0]  MOVE_LEFT:[0, 1, 0]  MOVE_RIGHT:[0, 0, 1]
 input_image = tf.placeholder("float", [None, 80, 100, 4])  # 游戏像素 每次输入前4次的轨迹图像
@@ -225,7 +225,7 @@ def train_neural_network(input_image, type='train'):
                 input_image_data = input_image_data1
                 n = n+1
 
-                if n % 50000 == 0:
+                if n % 10000 == 0:
                     saver.save(sess, 'model/game.cpk', global_step = n)  # 保存模型
 
                 print(n, "epsilon:", epsilon, " " ,"action:", maxIndex, " " ,"reward:", reward)
@@ -236,4 +236,4 @@ def train_neural_network(input_image, type='train'):
                 argmax_t[maxIndex] = 1
                 _, __ = game.step(list(argmax_t))
 
-train_neural_network(input_image, 'test')
+train_neural_network(input_image, 'train')

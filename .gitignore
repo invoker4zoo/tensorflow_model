@@ -113,6 +113,7 @@ ENV/
 # tmp data path
 /tmp/MNIST_data/*
 /tmp/cifar10_data/*
+/tmp/log/*
 
 # gan test file path
 /GAN/output/*
