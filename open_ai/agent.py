@@ -12,9 +12,17 @@ import gym
 from gym import Env
 from random import random
 from gridworld import *
+import pickle
+import datetime
+import os
+import tensorflow as tf
 
 
 class SampleQLearnAgent(object):
+    """
+    sample Q-Learning agent
+    """
+
     def __init__(self, env):
         self.env = env
         ## {s0:[],s1:[]}
@@ -162,6 +170,61 @@ class SampleQLearnAgent(object):
 
         return
 
+    def Q_table_saving(self, q_table, saving_path='models/',model_name='sample_q_table'):
+        # q_table :dict
+        time_str = datetime.datetime.now().strftime('%Y-%m-%d')
+        saving_file = model_name + '_' + time_str + '.' + 'pkl'
+        with open(os.path.join(saving_path,saving_file),'w') as f:
+            pickle.dump(q_table, f)
+
+
+class DQN(object):
+    # train class building
+    # DQN for flappybird
+    def __init__(self, *args,**kwargs):
+        """
+        :param args:
+        :param kwargs:
+        GAME = 'bird' # the name of the game being played for log files
+        ACTIONS = 2 # number of valid actions
+        GAMMA = 0.99 # decay rate of past observations
+        OBSERVE = 100000. # timesteps to observe before training
+        EXPLORE = 2000000. # frames over which to anneal epsilon
+        FINAL_EPSILON = 0.0001 # final value of epsilon
+        INITIAL_EPSILON = 0.0001 # starting value of epsilon
+        REPLAY_MEMORY = 50000 # number of previous transitions to remember
+        BATCH = 32 # size of minibatch
+        FRAME_PER_ACTION = 1
+        """
+        self.actions = kwargs.get('actions', 2)
+        self.name = kwargs.get('name', '')
+        self.gamma = kwargs.get('gamma', 0.9)
+        self.observe_length = kwargs.get('observe', 10000)
+        self.explore_length = kwargs.get('explore', 200000)
+        self.final_epsilon = kwargs.get('final_epsilon', 0.001)
+        self.initial_epsilon = kwargs.get('initial_epsilon', 1)
+        self.replay_memory = kwargs.get('replay_memory', 5000)
+        self.batch_size = kwargs.get('batch_size', 32)
+
+    def weight_variable(self, shape):
+        initial = tf.truncated_normal(shape, stddev=0.01)
+        return tf.Variable(initial)
+
+    def bias_variable(self, shape):
+        initial = tf.constant(0.01, shape=shape)
+        return tf.Variable(initial)
+
+    def conv2d(self, x, W, stride):
+        return tf.nn.conv2d(x, W, strides=[1, stride, stride, 1], padding="SAME")
+
+    def max_pool_2x2(self, x):
+        return tf.nn.max_pool(x, ksize=[1, 2, 2, 1], strides=[1, 2, 2, 1], padding="SAME")
+
+    def build_network(self):
+        pass
+
+    def train_network(self):
+        pass
 
 
 
@@ -181,4 +244,5 @@ def main():
 
 
 if __name__ == "__main__":
+    # model = DQN('test', 'test2',ACTIONS=2)
     main()
