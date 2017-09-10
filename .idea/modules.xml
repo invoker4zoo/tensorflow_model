@@ -3,7 +3,9 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/../DeepLearningFlappyBird-master/.idea/DeepLearningFlappyBird-master.iml" filepath="$PROJECT_DIR$/../DeepLearningFlappyBird-master/.idea/DeepLearningFlappyBird-master.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../nlp_tuitor/.idea/nlp_tuitor.iml" filepath="$PROJECT_DIR$/../nlp_tuitor/.idea/nlp_tuitor.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/tensorflow_model.iml" filepath="$PROJECT_DIR$/.idea/tensorflow_model.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../text_classification/.idea/text_classification.iml" filepath="$PROJECT_DIR$/../text_classification/.idea/text_classification.iml" />
     </modules>
   </component>
 </project>
