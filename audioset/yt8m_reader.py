@@ -82,8 +82,8 @@ class YT8MVideoLevelFeatureReader(BaseReader):
                 self.feature_sizes[feature_index], tf.float32
             )
         features = tf.parse_example(serialized_example, features=feature_map)
-        labels = tf.sparse_to_indicator(features["labels"], self.num_classes)
-        labels.set_shape([None, self.num_classes])
+        labels = tf.sparse_to_indicator(features["labels"], self.num_class)
+        labels.set_shape([None, self.num_class])
         concatenated_features = tf.concat([
                                               features[feature_name] for feature_name in self.feature_names], 1)
 
