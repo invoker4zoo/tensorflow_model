@@ -64,3 +64,8 @@ for i in range(1000):
     if i%50==0:
         result = sess.run(merged,feed_dict={xs:x_data,ys:y_data}) #merged也是需要run的
         writer.add_summary(result,i) #result是summary类型的，需要放入writer中，i步数（x轴）
+
+
+"""
+tensorboard --logdir="/目录"
+"""

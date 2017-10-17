@@ -85,11 +85,59 @@ def generate_batch_label_batch(image, label, min_queue_examples, batch_size, shu
     return image_batch, tf.reshape(label_batch, [batch_size])
 
 
-def distort_iimage(data_dir, batch_size):
+def get_distort_image(data_dir, batch_size, is_eval=False):
     """
-    construct distort image input
+    construct distort image input for graph
     :param data_dir:
     :param batch_size:
+    :param is_eval: get training data or evl data
     :return:
     """
-    pass
+    DISTORT_IMAGE_HEIGHT = 24
+    DISTORT_IMAGE_WEIGHT = 24
+    if not is_eval:
+        filenames = [os.path.join(data_dir, 'data_batch_%d.bin' % i)
+                     for i in xrange(1, 6)]
+    else:
+        filenames = [os.path.join(data_dir, 'test_batch.bin')]
+    for f in filenames:
+        if not os.path.exists(f):
+            raise ValueError('Failed to find file: ' + f)
+    # create a queue for reading file names
+    file_name_queue = tf.train.string_input_producer(filenames)
+    read_result = read_cifar_file(file_name_queue)
+    # get original image
+    reading_image = read_result.image
+    height = DISTORT_IMAGE_HEIGHT
+    weight = DISTORT_IMAGE_WEIGHT
+
+    # distort image
+    # get part of the image
+    distort_image = tf.random_crop(reading_image, [height, weight, 3])
+
+    # Randomly flip the image horizontally.
+    distort_image = tf.image.random_flip_left_right(distort_image)
+
+    # image brightness and contrast
+    distort_image = tf.image.random_brightness(distort_image, max_delta=63)
+    distort_image = tf.image.random_contrast(distort_image, lower=0.2, upper=1.8)
+    # Subtract off the mean and divide by the variance of the pixels.
+    """
+      Linearly scales `image` to have zero mean and unit norm.
+
+      This op computes `(x - mean) / adjusted_stddev`, where `mean` is the average
+      of all values in image, and
+      `adjusted_stddev = max(stddev, 1.0/sqrt(image.NumElements()))`.
+
+      `stddev` is the standard deviation of all values in `image`. It is capped
+      away from zero to protect against division by 0 when handling uniform images.
+    """
+    float_image = tf.image.per_image_standardization(distort_image)
+    # set label shape
+    read_result.label.set_shape([1])
+    # set batch queue params
+    if not is_eval:
+        min_queue_example = int(0.4 * NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN)
+    else:
+        min_queue_example = int(0.4 * NUM_EXAMPLES_PER_EPOCH_FOR_EVAL)
+    return generate_batch_label_batch(float_image, read_result.labl, min_queue_example, batch_size, shuffle=True)
