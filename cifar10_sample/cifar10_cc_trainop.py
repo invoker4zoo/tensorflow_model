@@ -22,6 +22,13 @@ BATCH_SIZE = 128
 DATA_DIR = 'home/showlove/cc/code/tensorflow_model/tmp/cifar10_data'
 TRAIN_DIR = ''
 NUM_CLASS = cifar10_cc_input.NUM_CLASSES
+IMAGE_SIZE = cifar10_cc_input.IMAGE_SIZE
+NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN = cifar10_cc_input.NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN
+NUM_EXAMPLES_PER_EPOCH_FOR_EVAL = cifar10_cc_input.NUM_EXAMPLES_PER_EPOCH_FOR_EVAL
+MOVING_AVERAGE_DECAY = 0.9999     # The decay to use for the moving average.
+NUM_EPOCHS_PER_DECAY = 350.0      # Epochs after which learning rate decays.
+LEARNING_RATE_DECAY_FACTOR = 0.1  # Learning rate decay factor.
+INITIAL_LEARNING_RATE = 0.1       # Initial learning rate.
 
 
 def tensor_summary(x):
@@ -143,9 +150,10 @@ def model(images):
         tensor_summary(logits)
     return logits
 
+
 def loss(logits, labels):
     """
-
+    calculate total loss
     :param logits:
     :param labels:
     :return:
@@ -157,5 +165,75 @@ def loss(logits, labels):
     cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
     tf.add_to_collection('losses', cross_entropy_mean)
 
-    # get total losses from collection 
+    # get total losses from collection
     return tf.add_n(tf.get_collection('losses'), name='total_loss')
+
+
+def loss_moving_avg_summary(total_loss):
+    """
+    calculate moving avg of all kinds og losses, add to summary
+    :param total_loss:
+    :return:
+    """
+    loss_avg_cal = tf.train.ExponentialMovingAverage(0.9, name='avg')
+    loss_avg_cal.average()
+    losses_list = tf.get_collection('losses')
+    losses_op = loss_avg_cal.apply(losses_list + [total_loss])
+    # attach summary to all kinds of losses
+    for loss_item in losses_list + [total_loss]:
+        tf.summary.scalar(loss_item.name + '_origin', loss_item)
+        tf.summary.scalar(loss_item.name, loss_avg_cal.average(loss_item))
+    return losses_op
+
+
+def train(total_loss, global_step):
+    """
+    construct train op
+    :param total_loss:
+    :param golbal_step:
+    :return:
+    """
+    num_batches_per_epoch = NUM_EXAMPLES_PER_EPOCH_FOR_TRAIN / BATCH_SIZE
+    decay_steps = int(num_batches_per_epoch * NUM_EPOCHS_PER_DECAY)
+
+    # Decay the learning rate exponentially based on the number of steps.
+    lr = tf.train.exponential_decay(INITIAL_LEARNING_RATE,
+                                    global_step,
+                                    decay_steps,
+                                    LEARNING_RATE_DECAY_FACTOR,
+                                    staircase=True)
+    tf.summary.scalar('learning_rate', lr)
+
+    # Generate moving averages of all losses and associated summaries.
+    loss_averages_op = loss_moving_avg_summary(total_loss)
+
+    # Compute gradients.
+    # with tf.control_dependencies
+    # in session calculate loss_averages_op first
+    # after then cal grads
+    with tf.control_dependencies([loss_averages_op]):
+        opt = tf.train.GradientDescentOptimizer(lr)
+        # opt.compute_gradients return grads_and_vars
+        grads = opt.compute_gradients(total_loss)
+
+    # Apply gradients. params grads_and_vars /get from opt.compute_gradients
+    apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
+
+    # Add histograms for trainable variables.
+    for var in tf.trainable_variables():
+        tf.summary.histogram(var.op.name, var)
+
+    # Add histograms for gradients. only calculate total_loss
+    for grad, var in grads:
+        if grad is not None:
+            tf.summary.histogram(var.op.name + '/gradients', grad)
+
+    # Track the moving averages of all trainable variables.
+    variable_averages = tf.train.ExponentialMovingAverage(
+        MOVING_AVERAGE_DECAY, global_step)
+    variables_averages_op = variable_averages.apply(tf.trainable_variables())
+
+    with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
+        train_op = tf.no_op(name='train')
+
+    return train_op
