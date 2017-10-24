@@ -120,3 +120,6 @@ ENV/
 
 # game ai model
 /reinforcement_learning_pygame/model/*
+
+# spider log
+/spider/log/*
