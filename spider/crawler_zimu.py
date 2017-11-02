@@ -50,7 +50,7 @@ class ShooterCrawler(BaseCrawler):
     def run(self):
         try:
             # for page_num in range(1,12994):
-            for page_num in range(447, 12994):
+            for page_num in range(1, 20):
                 logger.info('searching shooter in page %d'%page_num)
                 url = SEARCHING_URL.format(page_num)
                 content = self.get(url)
