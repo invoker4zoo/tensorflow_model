@@ -131,7 +131,9 @@ class CharRnn(object):
                     break
             self.saver.save(sess, os.path.join(save_path, 'rnn.module'), global_step=step)
 
-    def generate(self, gene_size, start_word, word_size):
+    def generate(self, gene_size, start_word, word_size, checkpoint=None):
+        if checkpoint:
+            self.load(checkpoint)
         gene_samples = [c for c in start_word]
         sess = self.sess
         new_state = sess.run(self.initial_state)
@@ -162,6 +164,10 @@ class CharRnn(object):
             gene_samples.append(c)
         return np.array(gene_samples)
 
+    def load(self, checkpoint):
+        self.session = tf.Session()
+        self.saver.restore(self.session, checkpoint)
+        print('Restored from: {}'.format(checkpoint))
 
 def random_pick_top_n(preds, word_size, top_n=5):
     """
