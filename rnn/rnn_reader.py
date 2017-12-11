@@ -16,7 +16,7 @@ import pickle
 
 
 def batch_generator(arr, batch_size, seq_size):
-    arr = copy(arr)
+    arr = copy.copy(arr)
     batch_arr_size = batch_size * seq_size
     n_chunck = int(len(arr) / batch_arr_size)
     arr = arr[:batch_arr_size * n_chunck]
@@ -25,7 +25,7 @@ def batch_generator(arr, batch_size, seq_size):
         np.random.shuffle(arr)
         for n in range(0, arr.shape[1], seq_size):
             x = arr[:, n: n + seq_size]
-            y = copy(x)
+            y = copy.copy(x)
             y[:, :-1] = x[:, 1:]
             yield x, y
 
