@@ -124,6 +124,7 @@ ENV/
 # spider log
 /spider/log/*
 
+
 # rnn model
 /rnn/data/*
 /rnn/model/poetry/*
