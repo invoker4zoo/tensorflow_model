@@ -126,4 +126,4 @@ ENV/
 
 # rnn model
 /rnn/data/*
-/rnn/model/*
+/rnn/model/poetry/*
