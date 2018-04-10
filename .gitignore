@@ -108,7 +108,7 @@ ENV/
 # cifar10_cc/data_set/*
 
 # idea
-.idea
+.idea/
 
 # tmp data path
 /tmp/MNIST_data/*
