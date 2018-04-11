@@ -22,7 +22,7 @@ tf.flags.DEFINE_boolean('use_embedding', False, 'whether to use embedding')
 tf.flags.DEFINE_integer('embedding_size', 128, 'size of embedding')
 tf.flags.DEFINE_string('converter_path', 'model/poetry/converter.pkl', 'model/name/converter.pkl')
 tf.flags.DEFINE_string('checkpoint_path', 'model/poetry/', 'checkpoint path')
-tf.flags.DEFINE_string('start_string', '林玲', 'use this string to start generating')
+tf.flags.DEFINE_string('start_string', '风', 'use this string to start generating')
 tf.flags.DEFINE_integer('max_length', 72, 'max length to generate')
 
 
