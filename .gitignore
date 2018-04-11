@@ -127,5 +127,5 @@ tmp/log/
 
 
 # rnn model
-/rnn/data/*
-/rnn/model/poetry/*
+rnn/data/
+rnn/model/
