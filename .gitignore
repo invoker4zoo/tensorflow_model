@@ -127,5 +127,4 @@ tmp/log/
 
 
 # rnn model
-rnn/data/
-rnn/model/
+rnn/model
